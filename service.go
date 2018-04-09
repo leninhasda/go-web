@@ -14,6 +14,7 @@ import (
 	"github.com/micro/cli"
 	"github.com/micro/go-log"
 	"github.com/micro/go-micro/registry"
+	maddr "github.com/micro/util/go/lib/addr"
 	mhttp "github.com/micro/util/go/lib/http"
 )
 
@@ -39,30 +40,35 @@ func newService(opts ...Option) Service {
 }
 
 func (s *service) genSrv() *registry.Service {
-	// parse address for host, port
-	var advt, host string
-	var port int
+	// default host:port
+	parts := strings.Split(s.opts.Address, ":")
+	host := strings.Join(parts[:len(parts)-1], ":")
+	port, _ := strconv.Atoi(parts[len(parts)-1])
 
 	// check the advertise address first
 	// if it exists then use it, otherwise
 	// use the address
 	if len(s.opts.Advertise) > 0 {
-		advt = s.opts.Advertise
-	} else {
-		advt = s.opts.Address
+		parts = strings.Split(s.opts.Advertise, ":")
+
+		// we have host:port
+		if len(parts) > 1 {
+			// set the host
+			host = strings.Join(parts[:len(parts)-1], ":")
+
+			// get the port
+			if aport, _ := strconv.Atoi(parts[len(parts)-1]); aport > 0 {
+				port = aport
+			}
+		} else {
+			host = parts[0]
+		}
 	}
 
-	parts := strings.Split(advt, ":")
-	if len(parts) > 1 {
-		host = strings.Join(parts[:len(parts)-1], ":")
-		port, _ = strconv.Atoi(parts[len(parts)-1])
-	} else {
-		host = parts[0]
-	}
-
-	addr, err := extractAddress(host)
+	addr, err := maddr.Extract(host)
 	if err != nil {
-		return nil
+		// best effort localhost
+		addr = "127.0.0.1"
 	}
 
 	return &registry.Service{
