@@ -81,3 +81,5 @@ c := service.Client()
 
 rsp, err := c.Get("http://example.com/foo")
 ```
+
+This will lookup service discovery for the service `example.com` and route to one of the available nodes.
