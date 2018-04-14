@@ -18,7 +18,7 @@ heartbeating and the ability to create web apps as microservices.
 
 - [Dependencies](#dependencies)
 - [Usage](#usage)
-- [Set Handler](#custom-handler)
+- [Set Handler](#set-handler)
 - [Call Service](#call-service)
 
 ## Dependencies
