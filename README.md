@@ -18,8 +18,8 @@ heartbeating and the ability to create web apps as microservices.
 
 - [Dependencies](#dependencies)
 - [Usage](#usage)
-- [Custom Handler](#custom-handler)
-- [Call Web Service](#call-web-service)
+- [Set Handler](#custom-handler)
+- [Call Service](#call-service)
 
 ## Dependencies
 
@@ -55,7 +55,7 @@ if err := service.Run(); err != nil {
 }
 ```
 
-## Custom Handler
+## Set Handler
 
 You might have a preference for a HTTP handler, so use something else. This loses the ability to register endpoints in discovery 
 but we'll fix that soon.
