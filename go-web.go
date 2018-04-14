@@ -10,10 +10,10 @@ import (
 type Service interface {
 	Client() *http.Client
 	Init(opts ...Option) error
+	Options() Options
 	Handle(pattern string, handler http.Handler)
 	HandleFunc(pattern string, handler func(http.ResponseWriter, *http.Request))
 	Run() error
-	Options() Options
 }
 
 type Option func(o *Options)
