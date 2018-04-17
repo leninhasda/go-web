@@ -1,7 +1,6 @@
 package web
 
 import (
-	api "go-api"
 	"net"
 	"net/http"
 	"os"
@@ -13,6 +12,7 @@ import (
 	"time"
 
 	"github.com/micro/cli"
+	api "github.com/micro/go-api"
 	"github.com/micro/go-log"
 	"github.com/micro/go-micro/registry"
 	maddr "github.com/micro/util/go/lib/addr"
