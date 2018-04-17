@@ -1,6 +1,7 @@
 package web
 
 import (
+	api "go-api"
 	"net"
 	"net/http"
 	"os"
@@ -227,7 +228,8 @@ func (s *service) Handle(pattern string, handler http.Handler) {
 	}
 	if !seen {
 		s.srv.Endpoints = append(s.srv.Endpoints, &registry.Endpoint{
-			Name: pattern,
+			Name:     pattern,
+			Metadata: api.Encode(&api.Endpoint{Name: pattern, Path: []string{pattern}, Handler: api.Web}),
 		})
 	}
 
@@ -244,7 +246,8 @@ func (s *service) HandleFunc(pattern string, handler func(http.ResponseWriter, *
 	}
 	if !seen {
 		s.srv.Endpoints = append(s.srv.Endpoints, &registry.Endpoint{
-			Name: pattern,
+			Name:     pattern,
+			Metadata: api.Encode(&api.Endpoint{Name: pattern, Path: []string{pattern}, Handler: api.Web}),
 		})
 	}
 
