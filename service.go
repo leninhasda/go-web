@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/micro/cli"
+	api "github.com/micro/go-api"
 	"github.com/micro/go-log"
 	"github.com/micro/go-micro/registry"
 	maddr "github.com/micro/util/go/lib/addr"
@@ -227,7 +228,8 @@ func (s *service) Handle(pattern string, handler http.Handler) {
 	}
 	if !seen {
 		s.srv.Endpoints = append(s.srv.Endpoints, &registry.Endpoint{
-			Name: pattern,
+			Name:     pattern,
+			Metadata: api.Encode(&api.Endpoint{Name: pattern, Path: []string{pattern}, Handler: api.Web}),
 		})
 	}
 
@@ -244,7 +246,8 @@ func (s *service) HandleFunc(pattern string, handler func(http.ResponseWriter, *
 	}
 	if !seen {
 		s.srv.Endpoints = append(s.srv.Endpoints, &registry.Endpoint{
-			Name: pattern,
+			Name:     pattern,
+			Metadata: api.Encode(&api.Endpoint{Name: pattern, Path: []string{pattern}, Handler: api.Web}),
 		})
 	}
 
