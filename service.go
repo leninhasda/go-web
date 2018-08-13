@@ -1,6 +1,7 @@
 package web
 
 import (
+	"crypto/tls"
 	"net"
 	"net/http"
 	"os"
@@ -12,10 +13,14 @@ import (
 	"time"
 
 	"github.com/micro/cli"
+	api "github.com/micro/go-api"
 	"github.com/micro/go-log"
 	"github.com/micro/go-micro/registry"
 	maddr "github.com/micro/util/go/lib/addr"
 	mhttp "github.com/micro/util/go/lib/http"
+
+	mnet "github.com/micro/util/go/lib/net"
+	mls "github.com/micro/util/go/lib/tls"
 )
 
 type service struct {
@@ -123,7 +128,7 @@ func (s *service) start() error {
 		return nil
 	}
 
-	l, err := net.Listen("tcp", s.opts.Address)
+	l, err := s.listen("tcp", s.opts.Address)
 	if err != nil {
 		return err
 	}
@@ -227,7 +232,8 @@ func (s *service) Handle(pattern string, handler http.Handler) {
 	}
 	if !seen {
 		s.srv.Endpoints = append(s.srv.Endpoints, &registry.Endpoint{
-			Name: pattern,
+			Name:     pattern,
+			Metadata: api.Encode(&api.Endpoint{Name: pattern, Path: []string{pattern}, Handler: api.Web}),
 		})
 	}
 
@@ -244,7 +250,8 @@ func (s *service) HandleFunc(pattern string, handler func(http.ResponseWriter, *
 	}
 	if !seen {
 		s.srv.Endpoints = append(s.srv.Endpoints, &registry.Endpoint{
-			Name: pattern,
+			Name:     pattern,
+			Metadata: api.Encode(&api.Endpoint{Name: pattern, Path: []string{pattern}, Handler: api.Web}),
 		})
 	}
 
@@ -342,4 +349,51 @@ func (s *service) Run() error {
 // Options returns the options for the given service
 func (s *service) Options() Options {
 	return s.opts
+}
+
+func (s *service) listen(network, addr string) (net.Listener, error) {
+	var l net.Listener
+	var err error
+
+	// TODO: support use of listen options
+	if s.opts.Secure || s.opts.TLSConfig != nil {
+		config := s.opts.TLSConfig
+
+		fn := func(addr string) (net.Listener, error) {
+			if config == nil {
+				hosts := []string{addr}
+
+				// check if its a valid host:port
+				if host, _, err := net.SplitHostPort(addr); err == nil {
+					if len(host) == 0 {
+						hosts = maddr.IPs()
+					} else {
+						hosts = []string{host}
+					}
+				}
+
+				// generate a certificate
+				cert, err := mls.Certificate(hosts...)
+				if err != nil {
+					return nil, err
+				}
+				config = &tls.Config{Certificates: []tls.Certificate{cert}}
+			}
+			return tls.Listen(network, addr, config)
+		}
+
+		l, err = mnet.Listen(addr, fn)
+	} else {
+		fn := func(addr string) (net.Listener, error) {
+			return net.Listen(network, addr)
+		}
+
+		l, err = mnet.Listen(addr, fn)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return l, nil
 }

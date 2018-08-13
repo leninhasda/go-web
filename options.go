@@ -2,6 +2,7 @@ package web
 
 import (
 	"context"
+	"crypto/tls"
 	"net/http"
 	"time"
 
@@ -27,7 +28,10 @@ type Options struct {
 	// Alternative Options
 	Context context.Context
 
-	Cmd         cmd.Cmd
+	Cmd cmd.Cmd
+
+	Secure      bool
+	TLSConfig   *tls.Config
 	BeforeStart []func() error
 	BeforeStop  []func() error
 	AfterStart  []func() error
@@ -181,5 +185,19 @@ func AfterStart(fn func() error) Option {
 func AfterStop(fn func() error) Option {
 	return func(o *Options) {
 		o.AfterStop = append(o.AfterStop, fn)
+	}
+}
+
+// Secure Use secure communication. If TLSConfig is not specified we use InsecureSkipVerify and generate a self signed cert
+func Secure(b bool) Option {
+	return func(o *Options) {
+		o.Secure = b
+	}
+}
+
+// TLSConfig to be used for the transport.
+func TLSConfig(t *tls.Config) Option {
+	return func(o *Options) {
+		o.TLSConfig = t
 	}
 }
