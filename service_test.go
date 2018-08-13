@@ -1,6 +1,7 @@
 package web
 
 import (
+	"crypto/tls"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -141,6 +142,7 @@ func TestOptions(t *testing.T) {
 		registerInterval = 456 * time.Second
 		handler          = http.NewServeMux()
 		metadata         = map[string]string{"key": "val"}
+		secure           = true
 	)
 
 	service := NewService(
@@ -154,6 +156,7 @@ func TestOptions(t *testing.T) {
 		RegisterInterval(registerInterval),
 		Handler(handler),
 		Metadata(metadata),
+		Secure(secure),
 	)
 
 	opts := service.Options()
@@ -173,6 +176,7 @@ func TestOptions(t *testing.T) {
 		{"registerInterval", registerInterval, opts.RegisterInterval},
 		{"handler", handler, opts.Handler},
 		{"metadata", metadata["key"], opts.Metadata["key"]},
+		{"secure", secure, opts.Secure},
 	}
 
 	for _, tc := range tests {
@@ -198,5 +202,59 @@ func eventually(pass func() bool, fail func(...interface{})) {
 				return
 			}
 		}
+	}
+}
+
+func TestTLS(t *testing.T) {
+	var (
+		str    = `<html><body><h1>Hello World</h1></body></html>`
+		fn     = func(w http.ResponseWriter, r *http.Request) { fmt.Fprint(w, str) }
+		secure = true
+		reg    = mock.NewRegistry()
+	)
+
+	service := NewService(
+		Name("go.micro.web.test"),
+		Secure(secure),
+		Registry(reg),
+	)
+
+	service.HandleFunc("/", fn)
+
+	go func() {
+		if err := service.Run(); err != nil {
+			t.Fatal(err)
+		}
+	}()
+
+	var s []*registry.Service
+
+	eventually(func() bool {
+		var err error
+		s, err = reg.GetService("go.micro.web.test")
+		return err == nil
+	}, t.Fatal)
+
+	if have, want := len(s), 1; have != want {
+		t.Fatalf("Expected %d but got %d services", want, have)
+	}
+
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{Transport: tr}
+	rsp, err := client.Get(fmt.Sprintf("https://%s:%d", s[0].Nodes[0].Address, s[0].Nodes[0].Port))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer rsp.Body.Close()
+
+	b, err := ioutil.ReadAll(rsp.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if string(b) != str {
+		t.Errorf("Expected %s got %s", str, string(b))
 	}
 }
