@@ -14,6 +14,7 @@ import (
 
 	"github.com/micro/cli"
 	"github.com/micro/go-log"
+	"github.com/micro/go-micro"
 	"github.com/micro/go-micro/registry"
 	maddr "github.com/micro/util/go/lib/addr"
 	mhttp "github.com/micro/util/go/lib/http"
@@ -109,14 +110,16 @@ func (s *service) register() error {
 	if s.srv == nil {
 		return nil
 	}
-	return registry.Register(s.srv, registry.RegisterTTL(s.opts.RegisterTTL))
+	r := s.opts.Service.Client().Options().Registry
+	return r.Register(s.srv, registry.RegisterTTL(s.opts.RegisterTTL))
 }
 
 func (s *service) deregister() error {
 	if s.srv == nil {
 		return nil
 	}
-	return registry.Deregister(s.srv)
+	r := s.opts.Service.Client().Options().Registry
+	return r.Deregister(s.srv)
 }
 
 func (s *service) start() error {
@@ -260,11 +263,17 @@ func (s *service) Init(opts ...Option) error {
 		o(&s.opts)
 	}
 
-	app := s.opts.Cmd.App()
+	serviceOpts := []micro.Option{}
 
-	before := app.Before
+	if len(s.opts.Flags) > 0 {
+		serviceOpts = append(serviceOpts, micro.Flags(s.opts.Flags...))
+	}
 
-	app.Before = func(ctx *cli.Context) error {
+	if s.opts.Registry != nil {
+		serviceOpts = append(serviceOpts, micro.Registry(s.opts.Registry))
+	}
+
+	serviceOpts = append(serviceOpts, micro.Action(func(ctx *cli.Context) {
 		if ttl := ctx.Int("register_ttl"); ttl > 0 {
 			s.opts.RegisterTTL = time.Duration(ttl) * time.Second
 		}
@@ -293,14 +302,12 @@ func (s *service) Init(opts ...Option) error {
 			s.opts.Advertise = adv
 		}
 
-		return before(ctx)
-	}
+		if s.opts.Action != nil {
+			s.opts.Action(ctx)
+		}
+	}))
 
-	err := s.opts.Cmd.Init()
-	if err != nil {
-		return err
-	}
-
+	s.opts.Service.Init(serviceOpts...)
 	srv := s.genSrv()
 	srv.Endpoints = s.srv.Endpoints
 	s.srv = srv

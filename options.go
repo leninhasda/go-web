@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/micro/cli"
-	"github.com/micro/go-micro/cmd"
+	"github.com/micro/go-micro"
 	"github.com/micro/go-micro/registry"
 )
 
@@ -19,6 +19,9 @@ type Options struct {
 	Address   string
 	Advertise string
 
+	Action func(*cli.Context)
+	Flags  []cli.Flag
+
 	RegisterTTL      time.Duration
 	RegisterInterval time.Duration
 
@@ -28,7 +31,8 @@ type Options struct {
 	// Alternative Options
 	Context context.Context
 
-	Cmd cmd.Cmd
+	Registry registry.Registry
+	Service  micro.Service
 
 	Secure      bool
 	TLSConfig   *tls.Config
@@ -46,7 +50,7 @@ func newOptions(opts ...Option) Options {
 		Address:          DefaultAddress,
 		RegisterTTL:      DefaultRegisterTTL,
 		RegisterInterval: DefaultRegisterInterval,
-		Cmd:              cmd.DefaultCmd,
+		Service:          micro.NewService(),
 		Context:          context.TODO(),
 	}
 
@@ -108,6 +112,12 @@ func Context(ctx context.Context) Option {
 	}
 }
 
+func Registry(r registry.Registry) Option {
+	return func(o *Options) {
+		o.Registry = r
+	}
+}
+
 func RegisterTTL(t time.Duration) Option {
 	return func(o *Options) {
 		o.RegisterTTL = t
@@ -132,31 +142,24 @@ func Server(srv *http.Server) Option {
 	}
 }
 
-// Set registry to be used by the service
-func Registry(r registry.Registry) Option {
+// MicroService sets the micro.Service used internally
+func MicroService(s micro.Service) Option {
 	return func(o *Options) {
-		registry.DefaultRegistry = r
-	}
-}
-
-// Cmd sets the command instance.
-func Cmd(c cmd.Cmd) Option {
-	return func(o *Options) {
-		o.Cmd = c
+		o.Service = s
 	}
 }
 
 // Flags sets the command flags.
 func Flags(flags ...cli.Flag) Option {
 	return func(o *Options) {
-		o.Cmd.App().Flags = append(o.Cmd.App().Flags, flags...)
+		o.Flags = append(o.Flags, flags...)
 	}
 }
 
 // Action sets the command action.
 func Action(a func(*cli.Context)) Option {
 	return func(o *Options) {
-		o.Cmd.App().Action = a
+		o.Action = a
 	}
 }
 
