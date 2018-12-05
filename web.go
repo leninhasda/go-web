@@ -7,6 +7,7 @@ import (
 	"github.com/pborman/uuid"
 )
 
+// Service is a web service with service discovery built in
 type Service interface {
 	Client() *http.Client
 	Init(opts ...Option) error
