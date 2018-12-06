@@ -110,7 +110,12 @@ func (s *service) register() error {
 	if s.srv == nil {
 		return nil
 	}
+	// default to service registry
 	r := s.opts.Service.Client().Options().Registry
+	// switch to option if specified
+	if s.opts.Registry != nil {
+		r = s.opts.Registry
+	}
 	return r.Register(s.srv, registry.RegisterTTL(s.opts.RegisterTTL))
 }
 
@@ -118,7 +123,12 @@ func (s *service) deregister() error {
 	if s.srv == nil {
 		return nil
 	}
+	// default to service registry
 	r := s.opts.Service.Client().Options().Registry
+	// switch to option if specified
+	if s.opts.Registry != nil {
+		r = s.opts.Registry
+	}
 	return r.Deregister(s.srv)
 }
 

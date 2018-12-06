@@ -171,7 +171,7 @@ func TestOptions(t *testing.T) {
 		{"id", id, opts.Id},
 		{"address", address, opts.Address},
 		{"advertise", advertise, opts.Advertise},
-		{"registry", reg, registry.DefaultRegistry},
+		{"registry", reg, opts.Registry},
 		{"registerTTL", registerTTL, opts.RegisterTTL},
 		{"registerInterval", registerInterval, opts.RegisterInterval},
 		{"handler", handler, opts.Handler},
