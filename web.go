@@ -1,3 +1,4 @@
+// Package web provides web based micro services
 package web
 
 import (
@@ -31,6 +32,7 @@ var (
 	DefaultRegisterInterval = time.Second * 30
 )
 
+// NewService returns a new web.Service
 func NewService(opts ...Option) Service {
 	return newService(opts...)
 }
