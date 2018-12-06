@@ -10,9 +10,14 @@ heartbeating and the ability to create web apps as microservices.
 
 ## Features
 
-- Service Discovery
-- Heartbeating
-- Custom Handlers
+- **Service Discovery** - Services are automatically registered in service discovery on startup. Go Web includes 
+a http.Client with pre-initialised roundtripper which makes use of service discovery so you can use service names.
+
+- **Heartbeating** - Go Web apps will periodically heartbeat with service discovery to provide liveness updates. 
+In the event a service fails it will be removed from the registry after a pre-defined expiry time.
+
+- **Custom Handlers** - Specify your own http router for handling requests. This allows you to maintain full 
+control over how you want to route to internal handlers.
 
 ## Getting Started
 
