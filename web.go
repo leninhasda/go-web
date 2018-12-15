@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/pborman/uuid"
+	"github.com/google/uuid"
 )
 
 // Service is a web service with service discovery built in
@@ -24,7 +24,7 @@ var (
 	// For serving
 	DefaultName    = "go-web"
 	DefaultVersion = "latest"
-	DefaultId      = uuid.NewUUID().String()
+	DefaultId      = uuid.New().String()
 	DefaultAddress = ":0"
 
 	// for registration
